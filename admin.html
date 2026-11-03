@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ക്യാമ്പയിൻ അഡ്മിൻ പാനൽ</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <style>
+    * { box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; margin: 0; padding: 0; }
+    body { background: #f0f4f8; padding: 24px 14px; display: flex; justify-content: center; }
+    .card { background: #fff; max-width: 460px; width: 100%; padding: 22px; border-radius: 14px; box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+    h2 { color: #0a4d8c; margin-bottom: 6px; font-size: 1.3rem; }
+    p.sub { font-size: 0.85rem; color: #666; margin-bottom: 18px; }
+    .form-group { margin-bottom: 14px; }
+    label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 5px; color: #333; }
+    input, textarea { width: 100%; padding: 10px 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 0.95rem; }
+    input:focus, textarea:focus { border-color: #0a4d8c; outline: none; }
+    button { width: 100%; padding: 12px; background: #0a4d8c; color: #fff; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.95rem; margin-top: 6px; }
+    button:disabled { background: #9bb7d4; cursor: not-allowed; }
+    #resultBox { margin-top: 18px; display: none; padding: 14px; background: #e8f5e9; border: 1px solid #c8e6c9; border-radius: 8px; word-break: break-all; }
+    .copy-btn { margin-top: 10px; padding: 8px 12px; background: #2e7d32; font-size: 0.85rem; width: auto; border-radius: 6px; }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <h2>പുതിയ ക്യാമ്പയിൻ ഉണ്ടാക്കുക</h2>
+  <p class="sub">വിവരങ്ങളും ഫ്രെയിമും നൽകി ലിങ്ക് ക്രിയേറ്റ് ചെയ്യാം</p>
+
+  <form id="campaignForm">
+    <div class="form-group">
+      <label>ക്യാമ്പയിൻ ഐഡി (Slug - English words):</label>
+      <input type="text" id="campaignSlug" required placeholder="rifai-nercha-2026">
+      <small style="color:#888; font-size: 0.75rem;">ലിങ്കിൽ വരുന്ന പേര് (space ഒഴിവാക്കി hypen നൽകുക)</small>
+    </div>
+    <div class="form-group">
+      <label>ക്യാമ്പയിന്റെ പേര് (Title):</label>
+      <input type="text" id="campaignTitle" required placeholder="ആണ്ട് നേർച്ചയും റാത്തീബും">
+    </div>
+    <div class="form-group">
+      <label>വിശദാംശങ്ങൾ (Date / Description):</label>
+      <textarea id="campaignDesc" rows="2" placeholder="2026 നവംബർ 11, 12 | ദാറുൽ ഇർഷാദ്"></textarea>
+    </div>
+    <div class="form-group">
+      <label>സുതാര്യമായ ഫ്രെയിം (PNG File):</label>
+      <input type="file" id="frameInput" accept="image/png" required>
+    </div>
+    <button type="submit" id="submitBtn">ക്യാമ്പയിൻ ആരംഭിക്കുക</button>
+  </form>
+
+  <div id="resultBox">
+    <p style="color: #2e7d32; font-weight: 600;">✅ ക്യാമ്പയിൻ വിജയകരമായി പബ്ലിഷ് ചെയ്തു!</p>
+    <p style="font-size: 0.85rem; margin-top: 8px;">ഈ ലിങ്ക് ആളുകൾക്ക് ഷെയർ ചെയ്യാം:</p>
+    <a id="campaignLink" href="#" target="_blank" style="color: #0a4d8c; font-weight: bold; text-decoration: underline;"></a>
+    <br>
+    <button type="button" class="copy-btn" id="copyBtn">ലിങ്ക് കോപ്പി ചെയ്യുക</button>
+  </div>
+</div>
+
+<script>
+  const IMGBB_API_KEY = "5d831641e138ce6bb03cdf121d1f73f4";
+  const form = document.getElementById('campaignForm');
+  const submitBtn = document.getElementById('submitBtn');
+  const resultBox = document.getElementById('resultBox');
+  const campaignLink = document.getElementById('campaignLink');
+  const copyBtn = document.getElementById('copyBtn');
+
+  async function uploadToImgBB(file) {
+    const formData = new FormData();
+    formData.append("image", file);
+    const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
+      method: "POST",
+      body: formData
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error?.message || "Image upload failed");
+    return data.data.url;
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    submitBtn.disabled = true;
+    submitBtn.innerText = "ഫ്രെയിം അപ്‌ലോഡ് ആകുന്നു... കാത്തിരിക്കുക";
+
+    const slug = document.getElementById('campaignSlug').value.trim().toLowerCase().replace(/[^a-z0-9-_]/g, '-');
+    const title = document.getElementById('campaignTitle').value;
+    const desc = document.getElementById('campaignDesc').value;
+    const frameFile = document.getElementById('frameInput').files[0];
+
+    try {
+      // 1. ImgBB-ലേക്ക് ഫ്രെയിം അപ്‌ലോഡ് ചെയ്യൽ
+      const frameUrl = await uploadToImgBB(frameFile);
+
+      submitBtn.innerText = "ഡാറ്റ സേവ് ചെയ്യുന്നു...";
+
+      // 2. Firestore-ലേക്ക് വിവരങ്ങൾ സേവ് ചെയ്യൽ
+      await db.collection("campaigns").doc(slug).set({
+        title: title,
+        description: desc,
+        frameUrl: frameUrl,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      // 3. ലിങ്ക് കാണിക്കൽ
+      const shareUrl = `${window.location.origin}/index.html?c=${slug}`;
+      campaignLink.href = shareUrl;
+      campaignLink.innerText = shareUrl;
+      resultBox.style.display = "block";
+      submitBtn.innerText = "വിജയകരമായി പൂർത്തിയായി!";
+    } catch (err) {
+      alert("Error: " + err.message);
+      submitBtn.disabled = false;
+      submitBtn.innerText = "വീണ്ടും ശ്രമിക്കുക";
+    }
+  });
+
+  copyBtn.addEventListener('click', () => {
+    navigator.clipboard.writeText(campaignLink.href);
+    copyBtn.innerText = "കോപ്പി ചെയ്തു!";
+    setTimeout(() => { copyBtn.innerText = "ലിങ്ക് കോപ്പി ചെയ്യുക"; }, 2000);
+  });
+</script>
+</body>
+</html>
