@@ -21,52 +21,183 @@
     button:disabled { background: #9bb7d4; cursor: not-allowed; }
     #resultBox { margin-top: 18px; display: none; padding: 14px; background: #e8f5e9; border: 1px solid #c8e6c9; border-radius: 8px; word-break: break-all; }
     .copy-btn { margin-top: 10px; padding: 8px 12px; background: #2e7d32; font-size: 0.85rem; width: auto; border-radius: 6px; }
+    #adminContent { display: none; }
+    .error-text { color: #d32f2f; font-size: 0.85rem; margin-top: 6px; display: none; }
+    .settings-box { margin-top: 28px; padding-top: 18px; border-top: 1px solid #e0e0e0; }
+    .settings-box h3 { font-size: 1.05rem; color: #444; margin-bottom: 12px; }
+    .btn-secondary { background: #455a64; margin-top: 4px; }
   </style>
 </head>
 <body>
 
 <div class="card">
-  <h2>പുതിയ ക്യാമ്പയിൻ ഉണ്ടാക്കുക</h2>
-  <p class="sub">വിവരങ്ങളും ഫ്രെയിമും നൽകി ലിങ്ക് ക്രിയേറ്റ് ചെയ്യാം</p>
+  <!-- 1. ലോഗിൻ സെക്ഷൻ -->
+  <div id="loginSection">
+    <h2>അഡ്മിൻ ലോഗിൻ</h2>
+    <p class="sub">ക്യാമ്പയിൻ പാനലിലേക്ക് കടക്കാൻ പാസ്‌വേഡ് നൽകുക</p>
+    <div class="form-group">
+      <label>പാസ്‌വേഡ്:</label>
+      <input type="password" id="adminPassword" placeholder="പാസ്‌വേഡ് നൽകുക">
+      <p class="error-text" id="loginError">തെറ്റായ പാസ്‌വേഡ്! വീണ്ടും ശ്രമിക്കുക.</p>
+    </div>
+    <button type="button" id="loginBtn">ലോഗിൻ ചെയ്യുക</button>
+  </div>
 
-  <form id="campaignForm">
-    <div class="form-group">
-      <label>ക്യാമ്പയിൻ ഐഡി (Slug - English words):</label>
-      <input type="text" id="campaignSlug" required placeholder="rifai-nercha-2026">
-      <small style="color:#888; font-size: 0.75rem;">ലിങ്കിൽ വരുന്ന പേര് (space ഒഴിവാക്കി hypen നൽകുക)</small>
+  <!-- 2. അഡ്മിൻ ഡാഷ്‌ബോർഡ് -->
+  <div id="adminContent">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+      <h2>പുതിയ ക്യാമ്പയിൻ</h2>
+      <button type="button" id="logoutBtn" style="width: auto; padding: 5px 12px; margin: 0; background: #eee; color: #333; font-size: 0.8rem;">ലോഗൗട്ട്</button>
     </div>
-    <div class="form-group">
-      <label>ക്യാമ്പയിന്റെ പേര് (Title):</label>
-      <input type="text" id="campaignTitle" required placeholder="ആണ്ട് നേർച്ചയും റാത്തീബും">
-    </div>
-    <div class="form-group">
-      <label>വിശദാംശങ്ങൾ (Date / Description):</label>
-      <textarea id="campaignDesc" rows="2" placeholder="2026 നവംബർ 11, 12 | ദാറുൽ ഇർഷാദ്"></textarea>
-    </div>
-    <div class="form-group">
-      <label>സുതാര്യമായ ഫ്രെയിം (PNG File):</label>
-      <input type="file" id="frameInput" accept="image/png" required>
-    </div>
-    <button type="submit" id="submitBtn">ക്യാമ്പയിൻ ആരംഭിക്കുക</button>
-  </form>
+    <p class="sub">വിവരങ്ങളും ഫ്രെയിമും നൽകി പുതിയ ലിങ്ക് ക്രിയേറ്റ് ചെയ്യാം</p>
 
-  <div id="resultBox">
-    <p style="color: #2e7d32; font-weight: 600;">✅ ക്യാമ്പയിൻ വിജയകരമായി പബ്ലിഷ് ചെയ്തു!</p>
-    <p style="font-size: 0.85rem; margin-top: 8px;">ഈ ലിങ്ക് ആളുകൾക്ക് ഷെയർ ചെയ്യാം:</p>
-    <a id="campaignLink" href="#" target="_blank" style="color: #0a4d8c; font-weight: bold; text-decoration: underline;"></a>
-    <br>
-    <button type="button" class="copy-btn" id="copyBtn">ലിങ്ക് കോപ്പി ചെയ്യുക</button>
+    <!-- ക്യാമ്പയിൻ ഫോം -->
+    <form id="campaignForm">
+      <div class="form-group">
+        <label>ക്യാമ്പയിൻ ഐഡി (Slug):</label>
+        <input type="text" id="campaignSlug" required placeholder="rifai-nercha-2026">
+        <small style="color:#888; font-size: 0.75rem;">ലിങ്കിൽ വരുന്ന പേര് (ഇംഗ്ലീഷിൽ - സ്പേസ് ഒഴിവാക്കുക)</small>
+      </div>
+      <div class="form-group">
+        <label>ക്യാമ്പയിന്റെ പേര് (Title):</label>
+        <input type="text" id="campaignTitle" required placeholder="ആണ്ട് നേർച്ചയും റാത്തീബും">
+      </div>
+      <div class="form-group">
+        <label>വിശദാംശങ്ങൾ (Date / Description):</label>
+        <textarea id="campaignDesc" rows="2" placeholder="2026 നവംബർ 11, 12 | ദാറുൽ ഇർഷാദ്"></textarea>
+      </div>
+      <div class="form-group">
+        <label>സുതാര്യമായ ഫ്രെയിം (PNG File):</label>
+        <input type="file" id="frameInput" accept="image/png" required>
+      </div>
+      <button type="submit" id="submitBtn">ക്യാമ്പയിൻ ആരംഭിക്കുക</button>
+    </form>
+
+    <div id="resultBox">
+      <p style="color: #2e7d32; font-weight: 600;">✅ ക്യാമ്പയിൻ വിജയകരമായി പബ്ലിഷ് ചെയ്തു!</p>
+      <p style="font-size: 0.85rem; margin-top: 8px;">ഈ ലിങ്ക് ആളുകൾക്ക് ഷെയർ ചെയ്യാം:</p>
+      <a id="campaignLink" href="#" target="_blank" style="color: #0a4d8c; font-weight: bold; text-decoration: underline;"></a>
+      <br>
+      <button type="button" class="copy-btn" id="copyBtn">ലിങ്ക് കോപ്പി ചെയ്യുക</button>
+    </div>
+
+    <!-- 3. പാസ്‌വേഡ് മാറ്റാനുള്ള സെറ്റിങ്സ് സെക്ഷൻ -->
+    <div class="settings-box">
+      <h3>⚙️ പാസ്‌വേഡ് മാറ്റുക</h3>
+      <div class="form-group">
+        <label>നിലവിലെ പാസ്‌വേഡ്:</label>
+        <input type="password" id="currentPass" placeholder="പഴയ പാസ്‌വേഡ്">
+      </div>
+      <div class="form-group">
+        <label>പുതിയ പാസ്‌വേഡ്:</label>
+        <input type="password" id="newPass" placeholder="പുതിയ പാസ്‌വേഡ്">
+      </div>
+      <button type="button" class="btn-secondary" id="changePassBtn">പാസ്‌വേഡ് സേവ് ചെയ്യുക</button>
+      <p id="passMsg" style="font-size: 0.85rem; margin-top: 8px; display: none;"></p>
+    </div>
   </div>
 </div>
 
 <script>
   const IMGBB_API_KEY = "5d831641e138ce6bb03cdf121d1f73f4";
-  const form = document.getElementById('campaignForm');
-  const submitBtn = document.getElementById('submitBtn');
-  const resultBox = document.getElementById('resultBox');
-  const campaignLink = document.getElementById('campaignLink');
-  const copyBtn = document.getElementById('copyBtn');
+  const DEFAULT_HASH = "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9"; // admin123
 
+  const loginSection = document.getElementById('loginSection');
+  const adminContent = document.getElementById('adminContent');
+  const passwordInput = document.getElementById('adminPassword');
+  const loginBtn = document.getElementById('loginBtn');
+  const loginError = document.getElementById('loginError');
+  const logoutBtn = document.getElementById('logoutBtn');
+
+  // SHA-256 ഹാഷിങ് ഫംഗ്ഷൻ
+  async function sha256(str) {
+    const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  // Firestore-ൽ നിന്ന് നിലവിലെ പാസ്‌വേഡ് ഹാഷ് എടുക്കുന്നു
+  async function getStoredHash() {
+    try {
+      const doc = await db.collection("settings").doc("auth").get();
+      if (doc.exists && doc.data().passwordHash) {
+        return doc.data().passwordHash;
+      }
+    } catch(e) { console.error(e); }
+    return DEFAULT_HASH;
+  }
+
+  // ലോഗിൻ സ്ഥിരീകരണം
+  if (sessionStorage.getItem('isAdminAuth') === 'true') {
+    loginSection.style.display = 'none';
+    adminContent.style.display = 'block';
+  }
+
+  loginBtn.addEventListener('click', async () => {
+    loginBtn.innerText = "പരിശോധിക്കുന്നു...";
+    const entered = passwordInput.value;
+    const enteredHash = await sha256(entered);
+    const correctHash = await getStoredHash();
+
+    if (enteredHash === correctHash) {
+      sessionStorage.setItem('isAdminAuth', 'true');
+      loginSection.style.display = 'none';
+      adminContent.style.display = 'block';
+      loginError.style.display = 'none';
+    } else {
+      loginError.style.display = 'block';
+    }
+    loginBtn.innerText = "ലോഗിൻ ചെയ്യുക";
+  });
+
+  logoutBtn.addEventListener('click', () => {
+    sessionStorage.removeItem('isAdminAuth');
+    location.reload();
+  });
+
+  // പാസ്‌വേഡ് മാറ്റൽ
+  const changePassBtn = document.getElementById('changePassBtn');
+  const passMsg = document.getElementById('passMsg');
+
+  changePassBtn.addEventListener('click', async () => {
+    const currentPass = document.getElementById('currentPass').value;
+    const newPass = document.getElementById('newPass').value;
+
+    if (!currentPass || !newPass) {
+      alert("രണ്ട് ഫീൽഡുകളും പൂരിപ്പിക്കുക!");
+      return;
+    }
+
+    changePassBtn.disabled = true;
+    changePassBtn.innerText = "സേവ് ചെയ്യുന്നു...";
+
+    const currentHash = await sha256(currentPass);
+    const storedHash = await getStoredHash();
+
+    if (currentHash !== storedHash) {
+      passMsg.innerText = "❌ നിലവിലെ പാസ്‌വേഡ് തെറ്റാണ്!";
+      passMsg.style.color = "#d32f2f";
+      passMsg.style.display = "block";
+      changePassBtn.disabled = false;
+      changePassBtn.innerText = "പാസ്‌വേഡ് സേവ് ചെയ്യുക";
+      return;
+    }
+
+    const newHash = await sha256(newPass);
+    try {
+      await db.collection("settings").doc("auth").set({ passwordHash: newHash });
+      passMsg.innerText = "✅ പുതിയ പാസ്‌വേഡ് വിജയകരമായി സേവ് ചെയ്തു!";
+      passMsg.style.color = "#2e7d32";
+      passMsg.style.display = "block";
+      document.getElementById('currentPass').value = '';
+      document.getElementById('newPass').value = '';
+    } catch(err) {
+      alert("Error: " + err.message);
+    }
+    changePassBtn.disabled = false;
+    changePassBtn.innerText = "പാസ്‌വേഡ് സേവ് ചെയ്യുക";
+  });
+
+  // ImgBB അപ്‌ലോഡ്
   async function uploadToImgBB(file) {
     const formData = new FormData();
     formData.append("image", file);
@@ -75,14 +206,21 @@
       body: formData
     });
     const data = await res.json();
-    if (!data.success) throw new Error(data.error?.message || "Image upload failed");
+    if (!data.success) throw new Error(data.error?.message || "Upload failed");
     return data.data.url;
   }
+
+  // ക്യാമ്പയിൻ പബ്ലിഷിംഗ് ഫോം
+  const form = document.getElementById('campaignForm');
+  const submitBtn = document.getElementById('submitBtn');
+  const resultBox = document.getElementById('resultBox');
+  const campaignLink = document.getElementById('campaignLink');
+  const copyBtn = document.getElementById('copyBtn');
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     submitBtn.disabled = true;
-    submitBtn.innerText = "ഫ്രെയിം അപ്‌ലോഡ് ആകുന്നു... കാത്തിരിക്കുക";
+    submitBtn.innerText = "ഫ്രെയിം അപ്‌ലോഡ് ആകുന്നു...";
 
     const slug = document.getElementById('campaignSlug').value.trim().toLowerCase().replace(/[^a-z0-9-_]/g, '-');
     const title = document.getElementById('campaignTitle').value;
@@ -90,12 +228,9 @@
     const frameFile = document.getElementById('frameInput').files[0];
 
     try {
-      // 1. ImgBB-ലേക്ക് ഫ്രെയിം അപ്‌ലോഡ് ചെയ്യൽ
       const frameUrl = await uploadToImgBB(frameFile);
-
       submitBtn.innerText = "ഡാറ്റ സേവ് ചെയ്യുന്നു...";
 
-      // 2. Firestore-ലേക്ക് വിവരങ്ങൾ സേവ് ചെയ്യൽ
       await db.collection("campaigns").doc(slug).set({
         title: title,
         description: desc,
@@ -103,7 +238,6 @@
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
 
-      // 3. ലിങ്ക് കാണിക്കൽ
       const shareUrl = `${window.location.origin}/index.html?c=${slug}`;
       campaignLink.href = shareUrl;
       campaignLink.innerText = shareUrl;
