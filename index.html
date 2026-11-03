@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ക്യാമ്പയിൻ ഫോട്ടോ ഫ്രെയിം</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <style>
+    :root { --primary: #0a4d8c; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+    body { background: #f3f6fa; display: flex; flex-direction: column; align-items: center; padding: 18px 12px; }
+    .container { background: #fff; max-width: 440px; width: 100%; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.08); padding: 18px; text-align: center; }
+    h2 { font-size: 1.2rem; color: var(--primary); margin-bottom: 4px; }
+    p.subtitle { font-size: 0.85rem; color: #555; margin-bottom: 14px; }
+    .canvas-wrapper { width: 100%; aspect-ratio: 1 / 1; border-radius: 12px; overflow: hidden; background: #e0e0e0; touch-action: none; position: relative; }
+    canvas { width: 100%; height: 100%; display: block; cursor: grab; }
+    canvas:active { cursor: grabbing; }
+    .controls { margin-top: 14px; display: flex; flex-direction: column; gap: 10px; }
+    .slider-box { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #444; }
+    .slider-box input { flex: 1; accent-color: var(--primary); }
+    .btn-group { display: flex; gap: 8px; }
+    .btn { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: 600; font-size: 0.95rem; cursor: pointer; text-decoration: none; }
+    .btn:active { opacity: 0.85; }
+    .btn-upload { background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center; }
+    .btn-download { background: #25d366; color: #fff; }
+    .btn-download:disabled { background: #b0e8c4; cursor: not-allowed; }
+    input[type="file"] { display: none; }
+    .hint { font-size: 0.75rem; color: #888; margin-top: 6px; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h2 id="displayTitle">ക്യാമ്പയിൻ ലോഡ് ആകുന്നു...</h2>
+  <p class="subtitle" id="displayDesc">ദയവായി അല്പം കാത്തിരിക്കൂ</p>
+
+  <div class="canvas-wrapper">
+    <canvas id="photoCanvas" width="1080" height="1080"></canvas>
+  </div>
+
+  <div class="controls">
+    <div class="slider-box">
+      <span>🔍 സൂം:</span>
+      <input type="range" id="zoomSlider" min="0.2" max="3" step="0.01" value="1" disabled>
+    </div>
+
+    <div class="btn-group">
+      <label class="btn btn-upload">
+        📁 ഫോട്ടോ മാറ്റുക
+        <input type="file" id="fileInput" accept="image/*">
+      </label>
+      <button class="btn btn-download" id="downloadBtn" disabled>⬇️ ഡൗൺലോഡ്</button>
+    </div>
+  </div>
+  <p class="hint">💡 ഫോട്ടോ വിരൽ കൊണ്ട് ഡ്രാഗ് ചെയ്ത് ഫ്രെയിമിനുള്ളിൽ ക്രമീകരിക്കാം.</p>
+</div>
+
+<script>
+  const canvas = document.getElementById('photoCanvas');
+  const ctx = canvas.getContext('2d');
+  const fileInput = document.getElementById('fileInput');
+  const zoomSlider = document.getElementById('zoomSlider');
+  const downloadBtn = document.getElementById('downloadBtn');
+
+  const frameImage = new Image();
+  frameImage.crossOrigin = "anonymous";
+  let userImage = null;
+  let imgX = 540, imgY = 540, imgScale = 1;
+  let isDragging = false, startX, startY;
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const campaignSlug = urlParams.get('c');
+
+  async function loadCampaign() {
+    if (!campaignSlug) {
+      document.getElementById('displayTitle').innerText = "ക്യാമ്പയിൻ ലിങ്ക് ലഭ്യമല്ല";
+      document.getElementById('displayDesc').innerText = "ശരിയായ ലിങ്ക് ഉപയോഗിച്ച് പ്രവേശിക്കുക";
+      return;
+    }
+
+    try {
+      const doc = await db.collection("campaigns").doc(campaignSlug).get();
+      if (doc.exists) {
+        const data = doc.data();
+        document.getElementById('displayTitle').innerText = data.title;
+        document.getElementById('displayDesc').innerText = data.description || '';
+        frameImage.src = data.frameUrl;
+        frameImage.onload = () => drawCanvas();
+      } else {
+        document.getElementById('displayTitle').innerText = "ക്യാമ്പയിൻ കണ്ടെത്തിയില്ല";
+      }
+    } catch (e) {
+      console.error(e);
+      document.getElementById('displayTitle').innerText = "ഡാറ്റ ലോഡ് ചെയ്യാൻ കഴിഞ്ഞില്ല";
+    }
+  }
+
+  function drawCanvas() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (userImage) {
+      ctx.save();
+      ctx.translate(imgX, imgY);
+      ctx.scale(imgScale, imgScale);
+      ctx.drawImage(userImage, -userImage.width / 2, -userImage.height / 2);
+      ctx.restore();
+    }
+    if (frameImage.complete && frameImage.naturalHeight !== 0) {
+      ctx.drawImage(frameImage, 0, 0, canvas.width, canvas.height);
+    }
+  }
+
+  fileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      userImage = new Image();
+      userImage.onload = () => {
+        imgX = canvas.width / 2;
+        imgY = canvas.height * 0.38;
+        const minDim = Math.min(userImage.width, userImage.height);
+        imgScale = 650 / minDim;
+
+        zoomSlider.value = imgScale;
+        zoomSlider.min = imgScale * 0.3;
+        zoomSlider.max = imgScale * 3.5;
+        zoomSlider.disabled = false;
+        downloadBtn.disabled = false;
+        drawCanvas();
+      };
+      userImage.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  zoomSlider.addEventListener('input', (e) => {
+    imgScale = parseFloat(e.target.value);
+    drawCanvas();
+  });
+
+  function getPos(e) {
+    const rect = canvas.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    return {
+      x: (clientX - rect.left) * (canvas.width / rect.width),
+      y: (clientY - rect.top) * (canvas.height / rect.height)
+    };
+  }
+
+  function startMove(e) {
+    if (!userImage) return;
+    isDragging = true;
+    const p = getPos(e);
+    startX = p.x - imgX;
+    startY = p.y - imgY;
+  }
+  function doMove(e) {
+    if (!isDragging || !userImage) return;
+    e.preventDefault();
+    const p = getPos(e);
+    imgX = p.x - startX;
+    imgY = p.y - startY;
+    drawCanvas();
+  }
+  function stopMove() { isDragging = false; }
+
+  canvas.addEventListener('mousedown', startMove);
+  window.addEventListener('mousemove', doMove);
+  window.addEventListener('mouseup', stopMove);
+  canvas.addEventListener('touchstart', startMove, { passive: false });
+  window.addEventListener('touchmove', doMove, { passive: false });
+  window.addEventListener('touchend', stopMove);
+
+  downloadBtn.addEventListener('click', () => {
+    const a = document.createElement('a');
+    a.download = `${campaignSlug || 'campaign'}-dp.png`;
+    a.href = canvas.toDataURL('image/png', 1.0);
+    a.click();
+  });
+
+  loadCampaign();
+</script>
+</body>
+</html>
