@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ക്യാമ്പയിൻ ഫോട്ടോ ഫ്രെയിം</title>
   
-  <!-- Google Fonts: Anek Malayalam (Malayalam & Latin) -->
+  <!-- Google Fonts: Anek Malayalam -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Anek+Malayalam:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -118,7 +118,7 @@
 <body>
 
 <div class="container">
-  <!-- Gear Icon -->
+  <!-- Gear Icon to Admin Page -->
   <a href="admin.html" class="admin-gear-btn" title="Admin Settings">⚙️</a>
 
   <h2 id="displayTitle">ക്യാമ്പയിൻ ലോഡ് ആകുന്നു...</h2>
@@ -157,19 +157,36 @@
   let userImage = null;
   let imgX = 540, imgY = 540, imgScale = 1;
   let isDragging = false, startX, startY;
+  let currentActiveSlug = "";
 
   const urlParams = new URLSearchParams(window.location.search);
   const campaignSlug = urlParams.get('c');
 
   async function loadCampaign() {
-    if (!campaignSlug) {
-      document.getElementById('displayTitle').innerText = "ക്യാമ്പയിൻ ലിങ്ക് ലഭ്യമല്ല";
-      document.getElementById('displayDesc').innerText = "ശരിയായ ലിങ്ക് ഉപയോഗിച്ച് പ്രവേശിക്കുക";
-      return;
-    }
-
     try {
-      const doc = await db.collection("campaigns").doc(campaignSlug).get();
+      let targetSlug = campaignSlug;
+
+      // 1. URL-ൽ ?c= ഇല്ലെങ്കിൽ ഏറ്റവും പുതിയ ക്യാമ്പയിൻ ഓട്ടോമാറ്റിക്കായി എടുക്കുന്നു
+      if (!targetSlug) {
+        document.getElementById('displayTitle').innerText = "ലോഡ് ചെയ്യുന്നു...";
+        const snapshot = await db.collection("campaigns").get();
+        
+        if (!snapshot.empty) {
+          // അവസാനത്തെ ഡോക്യുമെന്റ് സെലക്ട് ചെയ്യുന്നു
+          const docs = snapshot.docs;
+          const latestDoc = docs[docs.length - 1];
+          targetSlug = latestDoc.id;
+        } else {
+          document.getElementById('displayTitle').innerText = "ക്യാമ്പയിനുകൾ ലഭ്യമല്ല";
+          document.getElementById('displayDesc').innerText = "അഡ്മിൻ പാനലിൽ നിന്ന് പുതിയ ക്യാമ്പയിൻ ഉണ്ടാക്കുക";
+          return;
+        }
+      }
+
+      currentActiveSlug = targetSlug;
+
+      // 2. ക്യാമ്പയിൻ ഡാറ്റാബേസിൽ നിന്ന് എടുക്കുന്നു
+      const doc = await db.collection("campaigns").doc(targetSlug).get();
       if (doc.exists) {
         const data = doc.data();
         document.getElementById('displayTitle').innerText = data.title;
@@ -178,10 +195,12 @@
         frameImage.onload = () => drawCanvas();
       } else {
         document.getElementById('displayTitle').innerText = "ക്യാമ്പയിൻ കണ്ടെത്തിയില്ല";
+        document.getElementById('displayDesc').innerText = "ലിങ്ക് പരിശോധിക്കുക";
       }
     } catch (e) {
       console.error(e);
       document.getElementById('displayTitle').innerText = "ഡാറ്റ ലോഡ് ചെയ്യാൻ കഴിഞ്ഞില്ല";
+      document.getElementById('displayDesc').innerText = "ഇന്റർനെറ്റ് കണക്ഷൻ പരിശോധിക്കുക";
     }
   }
 
@@ -265,7 +284,7 @@
 
   downloadBtn.addEventListener('click', () => {
     const a = document.createElement('a');
-    a.download = `${campaignSlug || 'campaign'}-dp.png`;
+    a.download = `${currentActiveSlug || 'campaign'}-dp.png`;
     a.href = canvas.toDataURL('image/png', 1.0);
     a.click();
   });
