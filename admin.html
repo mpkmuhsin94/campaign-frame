@@ -9,8 +9,8 @@
   <script src="firebase-config.js"></script>
   <style>
     * { box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; margin: 0; padding: 0; }
-    body { background: #f0f4f8; padding: 24px 14px; display: flex; justify-content: center; }
-    .card { background: #fff; max-width: 460px; width: 100%; padding: 22px; border-radius: 14px; box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+    body { background: #f0f4f8; padding: 20px 12px; display: flex; justify-content: center; }
+    .card { background: #fff; max-width: 480px; width: 100%; padding: 22px; border-radius: 14px; box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
     h2 { color: #0a4d8c; margin-bottom: 6px; font-size: 1.3rem; }
     p.sub { font-size: 0.85rem; color: #666; margin-bottom: 18px; }
     .form-group { margin-bottom: 14px; }
@@ -20,9 +20,21 @@
     button { width: 100%; padding: 12px; background: #0a4d8c; color: #fff; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.95rem; margin-top: 6px; }
     button:disabled { background: #9bb7d4; cursor: not-allowed; }
     #resultBox { margin-top: 18px; display: none; padding: 14px; background: #e8f5e9; border: 1px solid #c8e6c9; border-radius: 8px; word-break: break-all; }
-    .copy-btn { margin-top: 10px; padding: 8px 12px; background: #2e7d32; font-size: 0.85rem; width: auto; border-radius: 6px; }
+    .copy-btn { margin-top: 8px; padding: 6px 12px; background: #2e7d32; font-size: 0.8rem; width: auto; border-radius: 5px; }
     #adminContent { display: none; }
     .error-text { color: #d32f2f; font-size: 0.85rem; margin-top: 6px; display: none; }
+    
+    /* Campaign List Styles */
+    .section-divider { margin-top: 28px; padding-top: 18px; border-top: 2px solid #eef2f6; }
+    .campaign-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px; margin-bottom: 10px; }
+    .campaign-item h4 { font-size: 1rem; color: #0a4d8c; margin-bottom: 4px; }
+    .campaign-item p { font-size: 0.8rem; color: #555; margin-bottom: 8px; }
+    .action-row { display: flex; gap: 8px; }
+    .btn-sm { padding: 6px 10px; font-size: 0.8rem; border-radius: 6px; border: none; font-weight: 600; cursor: pointer; }
+    .btn-edit { background: #0284c7; color: #fff; width: auto; }
+    .btn-del { background: #dc2626; color: #fff; width: auto; }
+    .btn-view { background: #16a34a; color: #fff; text-decoration: none; display: inline-flex; align-items: center; }
+    .btn-cancel { background: #64748b; color: #fff; margin-top: 6px; }
     .settings-box { margin-top: 28px; padding-top: 18px; border-top: 1px solid #e0e0e0; }
     .settings-box h3 { font-size: 1.05rem; color: #444; margin-bottom: 12px; }
     .btn-secondary { background: #455a64; margin-top: 4px; }
@@ -31,7 +43,7 @@
 <body>
 
 <div class="card">
-  <!-- 1. ലോഗിൻ സെക്ഷൻ -->
+  <!-- 1. Password Login Section -->
   <div id="loginSection">
     <h2>അഡ്മിൻ ലോഗിൻ</h2>
     <p class="sub">ക്യാമ്പയിൻ പാനലിലേക്ക് കടക്കാൻ പാസ്‌വേഡ് നൽകുക</p>
@@ -43,20 +55,22 @@
     <button type="button" id="loginBtn">ലോഗിൻ ചെയ്യുക</button>
   </div>
 
-  <!-- 2. അഡ്മിൻ ഡാഷ്‌ബോർഡ് -->
+  <!-- 2. Admin Content -->
   <div id="adminContent">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-      <h2>പുതിയ ക്യാമ്പയിൻ</h2>
+      <h2 id="formHeading">പുതിയ ക്യാമ്പയിൻ</h2>
       <button type="button" id="logoutBtn" style="width: auto; padding: 5px 12px; margin: 0; background: #eee; color: #333; font-size: 0.8rem;">ലോഗൗട്ട്</button>
     </div>
-    <p class="sub">വിവരങ്ങളും ഫ്രെയിമും നൽകി പുതിയ ലിങ്ക് ക്രിയേറ്റ് ചെയ്യാം</p>
+    <p class="sub" id="formSub">വിവരങ്ങളും ഫ്രെയിമും നൽകി ലിങ്ക് ക്രിയേറ്റ് ചെയ്യാം</p>
 
-    <!-- ക്യാമ്പയിൻ ഫോം -->
+    <!-- Create / Edit Form -->
     <form id="campaignForm">
+      <input type="hidden" id="isEditMode" value="false">
+      
       <div class="form-group">
         <label>ക്യാമ്പയിൻ ഐഡി (Slug):</label>
         <input type="text" id="campaignSlug" required placeholder="rifai-nercha-2026">
-        <small style="color:#888; font-size: 0.75rem;">ലിങ്കിൽ വരുന്ന പേര് (ഇംഗ്ലീഷിൽ - സ്പേസ് ഒഴിവാക്കുക)</small>
+        <small style="color:#888; font-size: 0.75rem;">ലിങ്കിൽ വരുന്ന പേര് (ഇംഗ്ലീഷിൽ)</small>
       </div>
       <div class="form-group">
         <label>ക്യാമ്പയിന്റെ പേര് (Title):</label>
@@ -67,21 +81,30 @@
         <textarea id="campaignDesc" rows="2" placeholder="2026 നവംബർ 11, 12 | ദാറുൽ ഇർഷാദ്"></textarea>
       </div>
       <div class="form-group">
-        <label>സുതാര്യമായ ഫ്രെയിം (PNG File):</label>
+        <label id="frameLabel">സുതാര്യമായ ഫ്രെയിം (PNG File):</label>
         <input type="file" id="frameInput" accept="image/png" required>
+        <small id="frameNote" style="color:#888; font-size: 0.75rem; display: none;">ഫ്രെയിം മാറ്റേണ്ടതില്ലെങ്കിൽ ഫയൽ തിരഞ്ഞെടുക്കേണ്ടതില്ല.</small>
       </div>
       <button type="submit" id="submitBtn">ക്യാമ്പയിൻ ആരംഭിക്കുക</button>
+      <button type="button" class="btn-cancel" id="cancelEditBtn" style="display: none;">Edit Cancel ചെയ്യുക</button>
     </form>
 
     <div id="resultBox">
-      <p style="color: #2e7d32; font-weight: 600;">✅ ക്യാമ്പയിൻ വിജയകരമായി പബ്ലിഷ് ചെയ്തു!</p>
-      <p style="font-size: 0.85rem; margin-top: 8px;">ഈ ലിങ്ക് ആളുകൾക്ക് ഷെയർ ചെയ്യാം:</p>
+      <p id="resMsg" style="color: #2e7d32; font-weight: 600;">✅ ക്യാമ്പയിൻ വിജയകരമായി പബ്ലിഷ് ചെയ്തു!</p>
+      <p style="font-size: 0.85rem; margin-top: 8px;">ലിങ്ക് ഷെയർ ചെയ്യാം:</p>
       <a id="campaignLink" href="#" target="_blank" style="color: #0a4d8c; font-weight: bold; text-decoration: underline;"></a>
       <br>
       <button type="button" class="copy-btn" id="copyBtn">ലിങ്ക് കോപ്പി ചെയ്യുക</button>
     </div>
 
-    <!-- 3. പാസ്‌വേഡ് മാറ്റാനുള്ള സെറ്റിങ്സ് സെക്ഷൻ -->
+    <!-- 3. Existing Campaigns List (Edit / Delete) -->
+    <div class="section-divider">
+      <h3>📋 നിലവിലെ ക്യാമ്പയിനുകൾ</h3>
+      <p style="font-size: 0.8rem; color: #666; margin-bottom: 12px;">ഇവിടെ നിന്നും മാറ്റങ്ങൾ വരുത്തുകയോ ലിങ്ക് എടുക്കുകയോ ചെയ്യാം</p>
+      <div id="campaignList">ലോഡ് ആകുന്നു...</div>
+    </div>
+
+    <!-- 4. Password Settings -->
     <div class="settings-box">
       <h3>⚙️ പാസ്‌വേഡ് മാറ്റുക</h3>
       <div class="form-group">
@@ -109,13 +132,13 @@
   const loginError = document.getElementById('loginError');
   const logoutBtn = document.getElementById('logoutBtn');
 
-  // SHA-256 ഹാഷിങ് ഫംഗ്ഷൻ
+  let existingFrameUrl = "";
+
   async function sha256(str) {
     const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
     return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
   }
 
-  // Firestore-ൽ നിന്ന് നിലവിലെ പാസ്‌വേഡ് ഹാഷ് എടുക്കുന്നു
   async function getStoredHash() {
     try {
       const doc = await db.collection("settings").doc("auth").get();
@@ -126,10 +149,10 @@
     return DEFAULT_HASH;
   }
 
-  // ലോഗിൻ സ്ഥിരീകരണം
   if (sessionStorage.getItem('isAdminAuth') === 'true') {
     loginSection.style.display = 'none';
     adminContent.style.display = 'block';
+    loadCampaignList();
   }
 
   loginBtn.addEventListener('click', async () => {
@@ -143,6 +166,7 @@
       loginSection.style.display = 'none';
       adminContent.style.display = 'block';
       loginError.style.display = 'none';
+      loadCampaignList();
     } else {
       loginError.style.display = 'block';
     }
@@ -154,7 +178,161 @@
     location.reload();
   });
 
-  // പാസ്‌വേഡ് മാറ്റൽ
+  async function uploadToImgBB(file) {
+    const formData = new FormData();
+    formData.append("image", file);
+    const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
+      method: "POST",
+      body: formData
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error?.message || "Upload failed");
+    return data.data.url;
+  }
+
+  // Load All Campaigns
+  async function loadCampaignList() {
+    const listDiv = document.getElementById('campaignList');
+    listDiv.innerHTML = "ലോഡ് ആകുന്നു...";
+    try {
+      const snapshot = await db.collection("campaigns").get();
+      if (snapshot.empty) {
+        listDiv.innerHTML = "<p style='font-size:0.85rem; color:#888;'>ക്യാമ്പയിനുകൾ ഒന്നും കണ്ടെത്തിയില്ല.</p>";
+        return;
+      }
+      let html = "";
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const slug = doc.id;
+        html += `
+          <div class="campaign-item">
+            <h4>${data.title}</h4>
+            <p>${data.description || 'വിവരങ്ങൾ നൽകിയിട്ടില്ല'}</p>
+            <div class="action-row">
+              <a href="index.html?c=${slug}" target="_blank" class="btn-sm btn-view">🔗 View</a>
+              <button class="btn-sm btn-edit" onclick="startEdit('${slug}', '${encodeURIComponent(data.title)}', '${encodeURIComponent(data.description || '')}', '${data.frameUrl}')">✏️ Edit</button>
+              <button class="btn-sm btn-del" onclick="deleteCampaign('${slug}')">🗑️ Delete</button>
+            </div>
+          </div>
+        `;
+      });
+      listDiv.innerHTML = html;
+    } catch (e) {
+      listDiv.innerHTML = "<p style='color:red;'>Error loading campaigns.</p>";
+    }
+  }
+
+  // Trigger Edit Mode
+  window.startEdit = (slug, encodedTitle, encodedDesc, frameUrl) => {
+    document.getElementById('isEditMode').value = "true";
+    document.getElementById('campaignSlug').value = slug;
+    document.getElementById('campaignSlug').readOnly = true; // Slug edit aakkaan pattilla
+    document.getElementById('campaignTitle').value = decodeURIComponent(encodedTitle);
+    document.getElementById('campaignDesc').value = decodeURIComponent(encodedDesc);
+    
+    existingFrameUrl = frameUrl;
+    document.getElementById('frameInput').required = false; // Puthiya photo venamenkil mathram
+    document.getElementById('frameNote').style.display = "block";
+    
+    document.getElementById('formHeading').innerText = "ക്യാമ്പയിൻ എഡിറ്റ് ചെയ്യുക";
+    document.getElementById('formSub').innerText = "മാറ്റങ്ങൾ വരുത്തിയ ശേഷം സേവ് ചെയ്യുക";
+    document.getElementById('submitBtn').innerText = "മാറ്റങ്ങൾ സേവ് ചെയ്യുക";
+    document.getElementById('cancelEditBtn').style.display = "block";
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Cancel Edit
+  document.getElementById('cancelEditBtn').addEventListener('click', () => {
+    resetForm();
+  });
+
+  function resetForm() {
+    document.getElementById('campaignForm').reset();
+    document.getElementById('isEditMode').value = "false";
+    document.getElementById('campaignSlug').readOnly = false;
+    document.getElementById('frameInput').required = true;
+    document.getElementById('frameNote').style.display = "none";
+    document.getElementById('formHeading').innerText = "പുതിയ ക്യാമ്പയിൻ";
+    document.getElementById('formSub').innerText = "വിവരങ്ങളും ഫ്രെയിമും നൽകി ലിങ്ക് ക്രിയേറ്റ് ചെയ്യാം";
+    document.getElementById('submitBtn').innerText = "ക്യാമ്പയിൻ ആരംഭിക്കുക";
+    document.getElementById('cancelEditBtn').style.display = "none";
+    existingFrameUrl = "";
+  }
+
+  // Delete Campaign
+  window.deleteCampaign = async (slug) => {
+    if (confirm(`'${slug}' ക്യാമ്പയിൻ പൂർണ്ണമായും ഒഴിവാക്കണമോ?`)) {
+      try {
+        await db.collection("campaigns").doc(slug).delete();
+        alert("ക്യാമ്പയിൻ ഡിലീറ്റ് ചെയ്തു!");
+        loadCampaignList();
+      } catch (e) {
+        alert("Error: " + e.message);
+      }
+    }
+  };
+
+  // Form Submit (Create & Update)
+  const form = document.getElementById('campaignForm');
+  const submitBtn = document.getElementById('submitBtn');
+  const resultBox = document.getElementById('resultBox');
+  const campaignLink = document.getElementById('campaignLink');
+  const copyBtn = document.getElementById('copyBtn');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    submitBtn.disabled = true;
+
+    const isEdit = document.getElementById('isEditMode').value === "true";
+    const slug = document.getElementById('campaignSlug').value.trim().toLowerCase().replace(/[^a-z0-9-_]/g, '-');
+    const title = document.getElementById('campaignTitle').value;
+    const desc = document.getElementById('campaignDesc').value;
+    const frameFile = document.getElementById('frameInput').files[0];
+
+    try {
+      let finalFrameUrl = existingFrameUrl;
+
+      if (frameFile) {
+        submitBtn.innerText = "പുതിയ ഫ്രെയിം അപ്‌ലോഡ് ആകുന്നു...";
+        finalFrameUrl = await uploadToImgBB(frameFile);
+      }
+
+      submitBtn.innerText = "ഡാറ്റ സേവ് ചെയ്യുന്നു...";
+
+      const dataObj = {
+        title: title,
+        description: desc,
+        frameUrl: finalFrameUrl
+      };
+
+      if (!isEdit) {
+        dataObj.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+      }
+
+      await db.collection("campaigns").doc(slug).set(dataObj, { merge: true });
+
+      const shareUrl = `${window.location.origin}/index.html?c=${slug}`;
+      campaignLink.href = shareUrl;
+      campaignLink.innerText = shareUrl;
+      document.getElementById('resMsg').innerText = isEdit ? "✅ മാറ്റങ്ങൾ സേവ് ചെയ്തു!" : "✅ പുതിയ ക്യാമ്പയിൻ തയ്യാറായി!";
+      resultBox.style.display = "block";
+
+      resetForm();
+      loadCampaignList();
+    } catch (err) {
+      alert("Error: " + err.message);
+    }
+    submitBtn.disabled = false;
+  });
+
+  copyBtn.addEventListener('click', () => {
+    navigator.clipboard.writeText(campaignLink.href);
+    copyBtn.innerText = "കോപ്പി ചെയ്തു!";
+    setTimeout(() => { copyBtn.innerText = "ലിങ്ക് കോപ്പി ചെയ്യുക"; }, 2000);
+  });
+
+  // Password Update
   const changePassBtn = document.getElementById('changePassBtn');
   const passMsg = document.getElementById('passMsg');
 
@@ -195,65 +373,6 @@
     }
     changePassBtn.disabled = false;
     changePassBtn.innerText = "പാസ്‌വേഡ് സേവ് ചെയ്യുക";
-  });
-
-  // ImgBB അപ്‌ലോഡ്
-  async function uploadToImgBB(file) {
-    const formData = new FormData();
-    formData.append("image", file);
-    const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
-      method: "POST",
-      body: formData
-    });
-    const data = await res.json();
-    if (!data.success) throw new Error(data.error?.message || "Upload failed");
-    return data.data.url;
-  }
-
-  // ക്യാമ്പയിൻ പബ്ലിഷിംഗ് ഫോം
-  const form = document.getElementById('campaignForm');
-  const submitBtn = document.getElementById('submitBtn');
-  const resultBox = document.getElementById('resultBox');
-  const campaignLink = document.getElementById('campaignLink');
-  const copyBtn = document.getElementById('copyBtn');
-
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    submitBtn.disabled = true;
-    submitBtn.innerText = "ഫ്രെയിം അപ്‌ലോഡ് ആകുന്നു...";
-
-    const slug = document.getElementById('campaignSlug').value.trim().toLowerCase().replace(/[^a-z0-9-_]/g, '-');
-    const title = document.getElementById('campaignTitle').value;
-    const desc = document.getElementById('campaignDesc').value;
-    const frameFile = document.getElementById('frameInput').files[0];
-
-    try {
-      const frameUrl = await uploadToImgBB(frameFile);
-      submitBtn.innerText = "ഡാറ്റ സേവ് ചെയ്യുന്നു...";
-
-      await db.collection("campaigns").doc(slug).set({
-        title: title,
-        description: desc,
-        frameUrl: frameUrl,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-
-      const shareUrl = `${window.location.origin}/index.html?c=${slug}`;
-      campaignLink.href = shareUrl;
-      campaignLink.innerText = shareUrl;
-      resultBox.style.display = "block";
-      submitBtn.innerText = "വിജയകരമായി പൂർത്തിയായി!";
-    } catch (err) {
-      alert("Error: " + err.message);
-      submitBtn.disabled = false;
-      submitBtn.innerText = "വീണ്ടും ശ്രമിക്കുക";
-    }
-  });
-
-  copyBtn.addEventListener('click', () => {
-    navigator.clipboard.writeText(campaignLink.href);
-    copyBtn.innerText = "കോപ്പി ചെയ്തു!";
-    setTimeout(() => { copyBtn.innerText = "ലിങ്ക് കോപ്പി ചെയ്യുക"; }, 2000);
   });
 </script>
 </body>
